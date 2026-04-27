@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+openai
+pydantic>=2.0
+langdetect
+python-dotenv
+streamlit
+requests
+pytest
+pytest-asyncio
+httpx
