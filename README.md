@@ -1,5 +1,7 @@
 # MomBot
 
+Loom walkthrough video: `[Add link here later]`
+
 MomBot is a bilingual pediatric symptom triage assistant for Mumzworld, designed for mothers who want fast, structured guidance when describing a child's symptoms in either English or Arabic. It does not diagnose disease, but it can ask a clarifying follow-up question, highlight emergency signals, suggest home-care steps when appropriate, and escalate clearly when a doctor is needed.
 
 ## Quick Start
@@ -79,3 +81,14 @@ pytest evals/test_triage.py
 ## Tooling
 
 Built with GPT-4o via OpenAI API, FastAPI, Streamlit, Pydantic v2. Claude used for architecture review and README drafting. pytest for evals.
+
+## AI Usage Note
+
+AI tools were used to help with ideation, implementation, architecture review, and README drafting. All final product decisions, testing, and safety checks were reviewed manually.
+
+## Time Log Example
+
+- `1.5h`: idea + design
+- `2h`: development
+- `1h`: evals
+- `0.5h`: README + Loom

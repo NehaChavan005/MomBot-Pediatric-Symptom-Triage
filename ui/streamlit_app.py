@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 import sys
+import os
 from typing import Any
 from pathlib import Path
 from html import escape, unescape
@@ -18,9 +20,12 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.language import detect_language
+from app.schema import SymptomInput
+from app.triage import emergency_response, safe_fallback_response, triage_symptoms
+from data.guidelines import check_emergency_keywords
 
 LOGGER = logging.getLogger(__name__)
-API_URL = "http://localhost:8000/triage"
+API_URL = os.getenv("MOMBOT_API_URL", "http://localhost:8000/triage")
 MUMZWORLD_PINK = "#E91E8C"
 MUMZWORLD_SOFT_PINK = "#FCE4F1"
 MUMZWORLD_BLUSH = "#FFF6FA"
@@ -308,6 +313,10 @@ def _render_structured_response(response: dict[str, Any]) -> None:
         )
         return
 
+    if is_out_of_scope:
+        st.info(summary_text)
+        return
+
     severity = response.get("severity", "high")
     badge_color = _severity_color(severity)
     possible_causes = response.get("possible_causes") or []
@@ -401,26 +410,24 @@ def _call_backend(payload: dict[str, Any]) -> dict[str, Any]:
         response.raise_for_status()
         return response.json()
     except requests.RequestException:
-        LOGGER.exception("Backend request failed.")
-        return {
-            "symptom_summary": "The backend could not be reached. Please make sure the API is running."
-            if detect_language(payload.get("message", "")) == "en"
-            else "تعذر الوصول إلى الخادم. يرجى التأكد من تشغيل الواجهة الخلفية.",
-            "severity": "high",
-            "possible_causes": [],
-            "home_care_steps": [],
-            "escalate_to_doctor": True,
-            "escalate_reason": "Technical error."
-            if detect_language(payload.get("message", "")) == "en"
-            else "خطأ تقني.",
-            "confidence": 0.0,
-            "disclaimer": "This is not a substitute for professional medical advice, diagnosis, or treatment."
-            if detect_language(payload.get("message", "")) == "en"
-            else "هذه المعلومات ليست بديلاً عن المشورة الطبية المهنية أو التشخيص أو العلاج.",
-            "response_language": detect_language(payload.get("message", "")),
-            "needs_clarification": False,
-            "clarifying_question": None,
-        }
+        LOGGER.exception("Backend request failed. Falling back to in-process triage.")
+        return _call_local_triage(payload)
+
+
+def _call_local_triage(payload: dict[str, Any]) -> dict[str, Any]:
+    """Run triage directly inside the Streamlit process when the API is unavailable."""
+    language = detect_language(payload.get("message", ""))
+
+    try:
+        symptom_input = SymptomInput.model_validate(payload)
+
+        if check_emergency_keywords(symptom_input.message):
+            return emergency_response(language, symptom_input.message).model_dump()
+
+        return asyncio.run(triage_symptoms(symptom_input)).model_dump()
+    except Exception:
+        LOGGER.exception("Local triage fallback failed.")
+        return safe_fallback_response(language).model_dump()
 
 
 def main() -> None:
