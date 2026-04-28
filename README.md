@@ -1,6 +1,6 @@
 # MomBot
 
-Loom walkthrough video: `[Add link here later]`
+Loom walkthrough video: https://drive.google.com/file/d/1HA-cJNI_y7JJL9NIm-EtGXOSnlPYnBiU/view?usp=sharing
 
 MomBot is a bilingual pediatric symptom triage assistant for Mumzworld, designed for mothers who want fast, structured guidance when describing a child's symptoms in either English or Arabic. It does not diagnose disease, but it can ask a clarifying follow-up question, highlight emergency signals, suggest home-care steps when appropriate, and escalate clearly when a doctor is needed.
 
